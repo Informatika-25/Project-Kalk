@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grafik Fungsi Biaya Cloud Storage</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+      }
+      h1 {
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 10px;
+      }
+      .subtitle {
+        text-align: center;
+        color: #7f8c8d;
+        margin-bottom: 30px;
+      }
+      .chart-container {
+        position: relative;
+        height: 500px;
+        margin-bottom: 30px;
+      }
+      .info-panel {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        border-left: 4px solid #3498db;
+        margin-bottom: 20px;
+      }
+      .function-definition {
+        background: #e8f4f8;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 20px 0;
+        font-family: monospace;
+        text-align: center;
+      }
+      .highlight {
+        background-color: #fff3cd;
+        padding: 10px;
+        border-radius: 5px;
+        border-left: 4px solid #ffc107;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+      }
+      th,
+      td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      .input-panel {
+        background: #e8f4f8;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+      .input-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      input[type="number"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+        box-sizing: border-box;
+      }
+      .button-container {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+      }
+      button {
+        border: none;
+        padding: 12px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+      button:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      #calculateBtn {
+        background-color: #3498db;
+        color: white;
+      }
+      #calculateBtn:hover {
+        background-color: #2980b9;
+      }
+      #viewChartBtn {
+        background-color: #9b59b6;
+        color: white;
+      }
+      #viewChartBtn:hover {
+        background-color: #8e44ad;
+      }
+      #backBtn {
+        background-color: #e74c3c;
+        color: white;
+      }
+      #backBtn:hover {
+        background-color: #c0392b;
+      }
+      .result-box {
+        background-color: #fff3cd;
+        padding: 15px;
+        border-radius: 5px;
+        border-left: 4px solid #ffc107;
+        margin-top: 15px;
+      }
+      .fullscreen-chart {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: white;
+        z-index: 1000;
+        padding: 20px;
+        display: none;
+      }
+      .fullscreen-chart .chart-container {
+        height: calc(100vh - 150px);
+      }
+      .fullscreen-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #eee;
+      }
+      .navigation-buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      .error-message {
+        color: #e74c3c;
+        background-color: #fadbd8;
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 10px;
+        display: none;
+      }
+      .discontinuity-point {
+        background-color: #f8d7da;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+      }
+      @media (max-width: 768px) {
+        .button-container {
+          flex-direction: column;
+        }
+        button {
+          width: 100%;
+        }
+        .fullscreen-header {
+          flex-direction: column;
+          gap: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" id="mainContent">
+      <h1>Grafik Fungsi Biaya Cloud Storage</h1>
+      <div class="subtitle">
+        Fungsi Piecewise C(x) - Analisis Biaya Berdasarkan Penggunaan
+        Penyimpanan
+      </div>
+
+      <div class="input-panel">
+        <h3>Kalkulator Biaya Cloud Storage</h3>
+        <div class="input-group">
+          <label for="storageInput">Masukkan Kebutuhan Penyimpanan (GB):</label>
+          <input
+            type="number"
+            id="storageInput"
+            min="0"
+            max="5000"
+            value="180"
+            step="1"
+          />
+        </div>
+
+        <div class="button-container">
+          <button id="calculateBtn">Hitung Biaya</button>
+        </div>
+
+        <div class="result-box" id="resultBox">
+          <strong>Biaya untuk 180 GB:</strong> Rp 90.000/bulan
+        </div>
+        <div class="error-message" id="errorMessage"></div>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="costChart"></canvas>
+      </div>
+
+      <div class="function-definition">
+        <strong>Fungsi C(x):</strong><br />
+        \[ C(x) = \begin{cases} 50.000, & \text{untuk } 0 \leq x \leq 50 \\
+        90.000, & \text{untuk } 50 < x \leq 200 \\ 150.000, & \text{untuk } 200
+        < x \leq 500 \\ 150.000 + 2.000(x - 500), & \text{untuk } x > 500
+        \end{cases} \]
+      </div>
+
+      <div class="info-panel">
+        <h3>Analisis untuk Content Creator (180 GB)</h3>
+        <div class="highlight">
+          <strong>Kebutuhan: 180 GB</strong><br />
+          <strong>Paket Terbaik: Standard</strong><br />
+          <strong>Biaya: Rp 90.000/bulan</strong>
+        </div>
+
+       
+        <small>*Paket Basic tidak tersedia untuk penggunaan di atas 50 GB</small> 
+        <table>
+          <thead>
+            <tr>
+              <th>Paket</th>
+              <th>Biaya untuk 180 GB</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Basic</td>
+              <td>Rp 50.000</td>
+              <td>Melebihi batas kuota (Harus Upgrade)</td>
+            </tr>
+            <tr>
+              <td>Standard</td>
+              <td>Rp 90.000</td>
+              <td>Optimal</td>
+            </tr>
+            <tr>
+              <td>Premium</td>
+              <td>Rp 150.000</td>
+              <td>Overkill (Paket Berlebihan)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="info-panel">
+        <h3>Analisis Kekontinuan</h3>
+        <p><strong>Fungsi C(x) tidak kontinu pada titik:</strong></p>
+        <div class="discontinuity-point">
+         <strong>x = 0 - 50 GB: </strong>Harga dimulai pada Rp 50.000
+        </div>
+        <div class="discontinuity-point">
+          <strong>x = 51- 200 GB: </strong>Harga melonjak dari Rp 50.000 menjadi Rp 90.000
+        </div>
+        <div class="discontinuity-point">
+         <strong>x = 201 - 500 GB: </strong>Harga melonjak dari Rp 90.000 menjadi Rp 150.000
+        </div>
+        <p><strong>Fungsi C(x) kontinu pada titik:</strong></p>
+        <div class="discontinuity-point">
+       <strong>x > 500 GB: </strong>Rp 150.000 + 2.000 ( x - 500)
+       </div>
+        <p>
+          <strong>Implikasi:</strong> Customer perlu berhati-hati dalam
+          memperkirakan kebutuhan karena kelebihan sedikit dari batas paket
+          menyebabkan kenaikan biaya yang signifikan.
+        </p>
+      </div>
+    </div>
+
+    <!-- Tampilan Grafik Fullscreen -->
+    <div class="fullscreen-chart" id="fullscreenChart">
+      <div class="fullscreen-header">
+        <h1>Grafik Detail Fungsi Biaya Cloud Storage</h1>
+        <button id="backBtn">Kembali ke Halaman Utama</button>
+      </div>
+
+      <div class="navigation-buttons">
+        <button id="zoomInBtn">Perbesar</button>
+        <button id="zoomOutBtn">Perkecil</button>
+        <button id="resetZoomBtn">Reset Zoom</button>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="fullscreenCostChart"></canvas>
+      </div>
+    </div>
+
+    <script>
+      // Variabel global untuk menyimpan nilai input terakhir
+      let currentStorageValue = 180;
+
+      // Fungsi piecewise C(x)
+      function calculateCost(x) {
+        if (x <= 50) {
+          return 50000;
+        } else if (x <= 200) {
+          return 90000;
+        } else if (x <= 500) {
+          return 150000;
+        } else {
+          return 150000 + 2000 * (x - 500);
+        }
+      }
+
+      // Fungsi untuk menampilkan pesan error
+      function showError(message) {
+        const errorElement = document.getElementById("errorMessage");
+        errorElement.textContent = message;
+        errorElement.style.display = "block";
+      }
+
+      // Fungsi untuk menyembunyikan pesan error
+      function hideError() {
+        document.getElementById("errorMessage").style.display = "none";
+      }
+
+      // Generate data untuk grafik
+      function generateChartData() {
+        const labels = [];
+        const data = [];
+        const segmentColors = [];
+        const discontinuityPoints = [];
+
+        for (let x = 0; x <= 600; x += 2) {
+          labels.push(x);
+          const cost = calculateCost(x);
+          data.push(cost);
+
+          // Warna berbeda untuk setiap segment
+          if (x <= 50) segmentColors.push("#e74c3c");
+          else if (x <= 200) segmentColors.push("#3498db");
+          else if (x <= 500) segmentColors.push("#2ecc71");
+          else segmentColors.push("#f39c12");
+
+          // Deteksi titik diskontinuitas
+          if (x === 50 || x === 200) {
+            discontinuityPoints.push({
+              x: x,
+              y: calculateCost(x),
+              y2: calculateCost(x + 0.1), // nilai sesaat setelah diskontinuitas
+            });
+          }
+        }
+
+        return { labels, data, segmentColors, discontinuityPoints };
+      }
+
+      // Inisialisasi grafik utama
+      let costChart;
+      function initMainChart() {
+        const ctx = document.getElementById("costChart").getContext("2d");
+        const chartData = generateChartData();
+
+        costChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: chartData.labels,
+            datasets: [
+              {
+                label: "Biaya Bulanan C(x)",
+                data: chartData.data,
+                borderColor: "#2980b9",
+                backgroundColor: "rgba(41, 128, 185, 0.1)",
+                borderWidth: 3,
+                fill: true,
+                tension: 0,
+                pointBackgroundColor: chartData.segmentColors,
+                pointBorderColor: chartData.segmentColors,
+                pointRadius: 1,
+                pointHoverRadius: 4,
+                segment: {
+                  borderColor: (ctx) => {
+                    const index = ctx.p1DataIndex;
+                    if (index <= 25) return "#e74c3c"; // Basic
+                    else if (index <= 100) return "#3498db"; // Standard
+                    else if (index <= 250) return "#2ecc71"; // Premium
+                    else return "#f39c12"; // Beyond Premium
+                  },
+                },
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: "Penyimpanan (GB)",
+                  font: {
+                    size: 14,
+                    weight: "bold",
+                  },
+                },
+                grid: {
+                  color: "rgba(0,0,0,0.1)",
+                },
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: "Biaya Bulanan (Rp)",
+                  font: {
+                    size: 14,
+                    weight: "bold",
+                  },
+                },
+                beginAtZero: true,
+                grid: {
+                  color: "rgba(0,0,0,0.1)",
+                },
+                ticks: {
+                  callback: function (value) {
+                    return "Rp " + value.toLocaleString("id-ID");
+                  },
+                  maxTicksLimit: 10,
+                },
+              },
+            },
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return `Biaya: Rp ${context.parsed.y.toLocaleString(
+                      "id-ID"
+                    )}`;
+                  },
+                  title: function (context) {
+                    return `Penyimpanan: ${context[0].label} GB`;
+                  },
+                },
+              },
+              legend: {
+                display: true,
+                position: "top",
+              },
+            },
+            interaction: {
+              intersect: false,
+              mode: "index",
+            },
+          },
+        });
+
+        // Tambahkan annotations untuk titik diskontinuitas
+        chartData.discontinuityPoints.forEach((point) => {
+          costChart.data.datasets.push({
+            label: `Diskontinuitas pada ${point.x} GB`,
+            data: [
+              {
+                x: point.x,
+                y: point.y,
+              },
+              {
+                x: point.x,
+                y: point.y2,
+              },
+            ],
+            borderColor: "rgba(0,0,0,0)",
+            backgroundColor: "rgba(0,0,0,0)",
+            pointBackgroundColor: ["#000", "#000"],
+            pointBorderColor: ["#000", "#000"],
+            pointRadius: [0, 0],
+            showLine: false,
+          });
+        });
+
+        // Tambahkan marker untuk nilai input saat ini
+        addUserMarker(currentStorageValue);
+
+        costChart.update();
+      }
+
+      // Fungsi untuk menambahkan marker pada grafik utama
+      function addUserMarker(storageValue) {
+        if (!costChart) return;
+
+        // Hapus marker sebelumnya jika ada
+        removeUserMarker();
+
+        const cost = calculateCost(storageValue);
+
+        // Tambahkan dataset baru untuk marker
+        costChart.data.datasets.push({
+          label: "Penggunaan Anda",
+          data: [{ x: storageValue, y: cost }],
+          backgroundColor: "#ff0000",
+          borderColor: "#ff0000",
+          pointRadius: 8,
+          pointHoverRadius: 10,
+          pointStyle: "circle",
+          type: "scatter",
+        });
+
+        costChart.update();
+      }
+
+      // Fungsi untuk menghapus marker dari grafik utama
+      function removeUserMarker() {
+        if (!costChart) return;
+
+        // Cari dataset dengan label "Penggunaan Anda"
+        const userMarkerIndex = costChart.data.datasets.findIndex(
+          (dataset) => dataset.label === "Penggunaan Anda"
+        );
+
+        if (userMarkerIndex !== -1) {
+          costChart.data.datasets.splice(userMarkerIndex, 1);
+        }
+      }
+
+      // Fungsi untuk menambahkan marker pada grafik fullscreen
+      function addFullscreenUserMarker(storageValue) {
+        if (!fullscreenCostChart) return;
+
+        // Hapus marker sebelumnya jika ada
+        removeFullscreenUserMarker();
+
+        const cost = calculateCost(storageValue);
+
+        // Tambahkan dataset baru untuk marker
+        fullscreenCostChart.data.datasets.push({
+          label: "Penggunaan Anda",
+          data: [{ x: storageValue, y: cost }],
+          backgroundColor: "#ff0000",
+          borderColor: "#ff0000",
+          pointRadius: 8,
+          pointHoverRadius: 10,
+          pointStyle: "circle",
+          type: "scatter",
+        });
+
+        fullscreenCostChart.update();
+      }
+
+      // Fungsi untuk menghapus marker dari grafik fullscreen
+      function removeFullscreenUserMarker() {
+        if (!fullscreenCostChart) return;
+
+        // Cari dataset dengan label "Penggunaan Anda"
+        const userMarkerIndex = fullscreenCostChart.data.datasets.findIndex(
+          (dataset) => dataset.label === "Penggunaan Anda"
+        );
+
+        if (userMarkerIndex !== -1) {
+          fullscreenCostChart.data.datasets.splice(userMarkerIndex, 1);
+        }
+      }
+
+      // Fungsi untuk memperbarui grafik berdasarkan input
+      function updateChart() {
+        const storageInput = document.getElementById("storageInput");
+        const resultBox = document.getElementById("resultBox");
+
+        const storageValue = parseInt(storageInput.value);
+
+        if (isNaN(storageValue) || storageValue < 0) {
+          showError("Masukkan nilai penyimpanan yang valid (angka positif)");
+          return;
+        }
+
+        if (storageValue > 5000) {
+          showError("Nilai penyimpanan maksimal adalah 5000 GB");
+          return;
+        }
+
+        hideError();
+
+        // Simpan nilai saat ini
+        currentStorageValue = storageValue;
+
+        // Hitung biaya
+        const cost = calculateCost(storageValue);
+
+        // Update hasil perhitungan
+        resultBox.innerHTML = `<strong>Biaya untuk ${storageValue} GB:</strong> Rp ${cost.toLocaleString(
+          "id-ID"
+        )}/bulan`;
+
+        // Update marker pada grafik utama
+        addUserMarker(storageValue);
+
+        // Update marker pada grafik fullscreen jika sedang ditampilkan
+        if (fullscreenCostChart) {
+          addFullscreenUserMarker(storageValue);
+        }
+
+        console.log(
+          `Kebutuhan Anda: ${storageValue} GB = Rp ${cost.toLocaleString(
+            "id-ID"
+          )}`
+        );
+      }
+
+      // Fungsi untuk menampilkan grafik fullscreen
+      function showFullscreenChart() {
+        document.getElementById("mainContent").style.display = "none";
+        document.getElementById("fullscreenChart").style.display = "block";
+        initFullscreenChart();
+      }
+
+      // Fungsi untuk kembali ke halaman utama
+      function backToMain() {
+        document.getElementById("fullscreenChart").style.display = "none";
+        document.getElementById("mainContent").style.display = "block";
+        if (fullscreenCostChart) {
+          fullscreenCostChart.destroy();
+        }
+      }
+
+      // Event listener untuk tombol hitung
+      document
+        .getElementById("calculateBtn")
+        .addEventListener("click", updateChart);
+
+      // Event listener untuk tombol kembali
+      document.getElementById("backBtn").addEventListener("click", backToMain);
+
+      // Event listener untuk input enter
+      document
+        .getElementById("storageInput")
+        .addEventListener("keyup", function (event) {
+          if (event.key === "Enter") {
+            updateChart();
+          }
+        });
+
+      // Event listener untuk perubahan input (real-time update)
+      document
+        .getElementById("storageInput")
+        .addEventListener("input", function () {
+          updateChart();
+        });
+
+      // Event listener untuk tombol zoom
+      document
+        .getElementById("zoomInBtn")
+        .addEventListener("click", function () {
+          if (fullscreenCostChart) {
+            fullscreenCostChart.zoom(1.1);
+          }
+        });
+
+      document
+        .getElementById("zoomOutBtn")
+        .addEventListener("click", function () {
+          if (fullscreenCostChart) {
+            fullscreenCostChart.zoom(0.9);
+          }
+        });
+
+      document
+        .getElementById("resetZoomBtn")
+        .addEventListener("click", function () {
+          if (fullscreenCostChart) {
+            fullscreenCostChart.resetZoom();
+          }
+        });
+
+      // Event listener untuk resize window
+      window.addEventListener("resize", function () {
+        if (costChart) {
+          costChart.resize();
+        }
+      });
+
+      // Inisialisasi saat halaman dimuat
+      document.addEventListener("DOMContentLoaded", function () {
+        initMainChart();
+        updateChart();
+      });
+    </script>
+  </body>
+</html>
